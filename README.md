@@ -47,7 +47,7 @@ find yourself running this template a lot, please move the models to S3 or creat
 
 
 ### License / Whatever
-- Use at your own risk
+- Use at your own cost and risk
 - Feel free to copy and have fun
 
 
