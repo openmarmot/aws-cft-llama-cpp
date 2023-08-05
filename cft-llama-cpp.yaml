@@ -1,0 +1,126 @@
+# !! Important Notes !!
+# - This is designed to be a minimal template for hobbyists that focuses on keeping costs low
+# - If your budget allows consider an autoscaling cluster of ec2 instances on a private subnet with a ALB and WAF in front
+# - Be mindful of excessively downloading models. If you are launching a lot of instance consider creating an image with the model setup
+#   instead of downloading it each time.
+# - For faster model performance consider a GPU instance type. Note that you will need to install some Nvidia libraries and modify the Make settings
+#   I might produce a guide on this in the future
+ 
+
+
+# llama.cpp repo - check this out : https://github.com/ggerganov/llama.cpp
+
+AWSTemplateFormatVersion: '2010-09-09'
+Description: AWS CloudFormation Template that creates and runs a Llama.cpp server
+Parameters:
+  NamePrefix:
+    Description: A prefix to use when naming objects created by this template
+    Type: String
+    Default: 'cft-llama'
+  InstanceType:
+    Description: EC2 Instance Type - about 8 GB of ram for a 7b model, about 16 for a 13b
+    Type: String
+    Default: t2.micro
+  AmiId:
+    Description: Amazon Linux 2023 AMI ID
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Default: '/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64'
+  VolumeSize:
+    Description: Size of the EC2 instance volume in GB
+    Type: Number
+    Default: 25
+  VPC:
+    Description: The VPC for the AWS objects
+    Type: 'AWS::EC2::VPC::Id'
+  SubnetId:
+    Description: VPC PUBLIC subnet ID
+    Type: 'AWS::EC2::Subnet::Id'
+  NetAllowedIn:
+    Description: 'CIDR Network Allowed to access the server (X.X.X.X/XX). This could be your public ip with a /32'
+    Type: String
+  
+Resources:
+
+  IAMRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: !Sub '${NamePrefix}-ec2-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: 'Allow'
+            Principal:
+              Service:
+                - 'ec2.amazonaws.com'
+            Action:
+              - 'sts:AssumeRole'
+      Policies:
+        - PolicyName: ssm-connect-minimal-permissions
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Action:
+                  - 'ssm:UpdateInstanceInformation'
+                  - 'ssmmessages:CreateControlChannel'
+                  - 'ssmmessages:CreateDataChannel'
+                  - 'ssmmessages:OpenControlChannel'
+                  - 'ssmmessages:OpenDataChannel'
+                Resource: '*'
+
+  InstanceProfile:
+    Type: 'AWS::IAM::InstanceProfile'
+    Properties:
+      InstanceProfileName: !Sub '${NamePrefix}-instance-profile'
+      Roles:
+        - Ref: IAMRole
+
+  InstanceSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: !Sub '${NamePrefix} security group'
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: !Ref NetAllowedIn
+          Description: 'Allow http inbound to the webserver'
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+          Description: 'Allow Outbound'
+      VpcId: !Ref VPC
+
+  LlamaCppServer:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      InstanceType: !Ref InstanceType
+      ImageId: !Ref AmiId
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: !Ref VolumeSize
+            Encrypted: true
+      SecurityGroupIds:
+        - !GetAtt InstanceSecurityGroup.GroupId
+      SubnetId: !Ref SubnetId
+      UserData:
+        Fn::Base64: !Sub |
+          #!/usr/bin/env bash
+          # Simulate application install
+          sleep 60
+          # Signal result to CloudFormation
+          /opt/aws/bin/cfn-signal -e $? --stack "${AWS::StackName}" --resource "LlamaCppServer" --region "${AWS::Region}"
+      Tags:
+        - Key: Name
+          Value: !Sub '${NamePrefix} llama.cpp server'
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT10M
+
+  
+
+Outputs:
+  InstancePrivateIp:
+    Description: The public IP for the server
+    Value: !GetAtt LlamaCppServer.PublicIp
