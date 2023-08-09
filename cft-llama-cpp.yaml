@@ -130,6 +130,7 @@ Resources:
         - DeviceName: /dev/xvda
           Ebs:
             VolumeSize: !Ref VolumeSize
+            VolumeType: gp3
             Encrypted: true
       SecurityGroupIds:
         - !GetAtt InstanceSecurityGroup.GroupId
