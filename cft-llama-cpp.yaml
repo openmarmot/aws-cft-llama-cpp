@@ -1,35 +1,10 @@
 # https://github.com/openmarmot/aws-cft-llama-cpp
 
+# ! Please view the Readme at the github repo for important usage notes !
+
 # Refs
 #  llama.cpp repo  : https://github.com/ggerganov/llama.cpp
 #  hugging face : https://huggingface.co/
-
-# I have a model hosted by Hugging Face as the default here. 
-# Please be mindful of the bandwidth you are using as they generously host for free and help this community prosper.
-# If you find yourself downloading something repeatedly please consider storing it locally in a s3 bucket
-
-# !! Important Notes !!
-# - This is designed to be a minimal template for hobbyists that focuses on keeping costs low
-# - If your budget allows consider an autoscaling cluster of ec2 instances on a private subnet with a ALB and WAF in front
-# - Be mindful of excessively downloading models. If you are launching a lot of instance consider creating an image with the model setup
-#   instead of downloading it each time.
-# - For faster model performance consider a GPU instance type. Note that you will need to install some Nvidia libraries and modify the Make settings
-#   I might produce a guide on this in the future
-# - The template as designed uses port 80 - this is unecrypted. Any data you submit will go over the internet unecrypted. If you want HTTPS the 
-#   best way to get it would be to put the instance in a private subnet and put a load balancer in front of it
-# - the setup launches a web server. Go to the public ip of the serve on port 80 to access it. http://<server ip>
-# - if you need to work on the server it is all setup to aws aws ssm connect
-
-# to restart the web server after power cycling the instance, do the following 
-# - connect to the instance with ssm (connect button)
-# sudo su 
-# cd /opt/llama.cpp
-# ./server -m models/<model name here> -c 2048 --host 0.0.0.0 --port 80
-
-# !! This template as currently designed will cost around $120/month if you leave the instace on all month as of Amazon 2023 pricing.
-# Use at your own risk!
- 
-
 
 AWSTemplateFormatVersion: '2010-09-09'
 Description: AWS CloudFormation Template that creates and runs a Llama.cpp server
@@ -60,7 +35,7 @@ Parameters:
     Description: 'CIDR Network Allowed to access the server (X.X.X.X/XX). This could be your public ip with a /32'
     Type: String
   ModelURL:
-    Description: 'URL for the model you want to download. The default model is aobut 4 GB. Be mindful about not abusing by excessive downloading'
+    Description: 'URL for the model you want to download. The default model is about 4 GB.'
     Type: String
     Default: 'https://huggingface.co/TheBloke/vicuna-7B-v1.5-GGML/resolve/main/vicuna-7b-v1.5.ggmlv3.q4_K_M.bin'
   ModelFileName:
@@ -145,7 +120,7 @@ Resources:
           # compile llama.cpp
           make
           # download the model file 
-          wget -P models ${ModelURL}
+          wget -O models/${ModelFileName} ${ModelURL}
           # start server
           nohup ./server -m models/${ModelFileName} -c 2048 --host 0.0.0.0 --port 80 &
           # Signal result to CloudFormation
