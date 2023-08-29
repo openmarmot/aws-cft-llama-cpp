@@ -35,13 +35,13 @@ Parameters:
     Description: 'CIDR Network Allowed to access the server (X.X.X.X/XX). This could be your public ip with a /32'
     Type: String
   ModelURL:
-    Description: 'URL for the model you want to download. The default model is about 4 GB.'
+    Description: 'URL for the .gguf format model you want to download. The default model is about 4.8 GB.'
     Type: String
-    Default: 'https://huggingface.co/TheBloke/vicuna-7B-v1.5-GGML/resolve/main/vicuna-7b-v1.5.ggmlv3.q4_K_M.bin'
+    Default: 'https://huggingface.co/TheBloke/CodeLlama-7B-Instruct-GGUF/resolve/main/codellama-7b-instruct.Q5_K_S.gguf'
   ModelFileName:
-    Description: 'The file name you want to save the model as (x.bin)'
+    Description: 'The file name you want to save the model as (x.gguf)'
     Type: String
-    Default: 'vicuna-7b-v1.5.ggmlv3.q4_K_M.bin'
+    Default: 'codellama-7b-instruct.Q5_K_S.gguf'
   
 Resources:
 
@@ -122,7 +122,7 @@ Resources:
           # download the model file 
           wget -O models/${ModelFileName} ${ModelURL}
           # start server
-          nohup ./server -m models/${ModelFileName} -c 2048 --host 0.0.0.0 --port 80 &
+          nohup ./server -m models/${ModelFileName} -c 4096 --host 0.0.0.0 --port 80 &
           # Signal result to CloudFormation
           /opt/aws/bin/cfn-signal -e $? --stack "${AWS::StackName}" --resource "LlamaCppServer" --region "${AWS::Region}"
       Tags:
