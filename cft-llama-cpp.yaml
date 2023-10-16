@@ -16,7 +16,7 @@ Parameters:
   InstanceType:
     Description: EC2 Instance Type - about 8 GB of ram for a 7b model, about 16 for a 13b. The more CPU the better
     Type: String
-    Default: c5a.xlarge
+    Default: c6a.xlarge
   AmiId:
     Description: Amazon Linux 2023 AMI ID
     Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
@@ -37,11 +37,11 @@ Parameters:
   ModelURL:
     Description: 'URL for the .gguf format model you want to download. The default model is about 4.8 GB.'
     Type: String
-    Default: 'https://huggingface.co/TheBloke/CodeLlama-7B-Instruct-GGUF/resolve/main/codellama-7b-instruct.Q5_K_S.gguf'
+    Default: 'https://huggingface.co/TheBloke/CollectiveCognition-v1.1-Mistral-7B-GGUF/resolve/main/collectivecognition-v1.1-mistral-7b.Q4_K_M.gguf'
   ModelFileName:
     Description: 'The file name you want to save the model as (x.gguf)'
     Type: String
-    Default: 'codellama-7b-instruct.Q5_K_S.gguf'
+    Default: 'collectivecognition.gguf'
   
 Resources:
 
@@ -113,7 +113,7 @@ Resources:
       UserData:
         Fn::Base64: !Sub |
           #!/usr/bin/env bash
-          yum install make automake gcc gcc-c++ kernel-devel python3-virtualenv screen git -y
+          yum install make automake gcc gcc-c++ kernel-devel git -y
           cd /opt
           git clone https://github.com/ggerganov/llama.cpp.git
           cd llama.cpp
@@ -122,7 +122,7 @@ Resources:
           # download the model file 
           wget -O models/${ModelFileName} ${ModelURL}
           # start server
-          nohup ./server -m models/${ModelFileName} -c 4096 --host 0.0.0.0 --port 80 &
+          nohup ./server -m models/${ModelFileName} --host 0.0.0.0 --port 80 &
           # Signal result to CloudFormation
           /opt/aws/bin/cfn-signal -e $? --stack "${AWS::StackName}" --resource "LlamaCppServer" --region "${AWS::Region}"
       Tags:
@@ -133,6 +133,6 @@ Resources:
         Timeout: PT10M
 
 Outputs:
-  InstancePrivateIp:
+  WebServerURL:
     Description: Access the Web Server Here
     Value: !Join ['',['http://',!GetAtt LlamaCppServer.PublicIp]]
