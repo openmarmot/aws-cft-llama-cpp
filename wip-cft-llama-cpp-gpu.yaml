@@ -1,0 +1,155 @@
+# https://github.com/openmarmot/aws-cft-llama-cpp
+
+# ! Please view the Readme at the github repo for important usage notes !
+
+# Refs
+#  llama.cpp repo  : https://github.com/ggerganov/llama.cpp
+#  hugging face : https://huggingface.co/
+
+AWSTemplateFormatVersion: '2010-09-09'
+Description: AWS CloudFormation Template that creates and runs a Llama.cpp server. Optimized for P3 GPU instance
+Parameters:
+  NamePrefix:
+    Description: A prefix to use when naming objects created by this template
+    Type: String
+    Default: 'cft-llama'
+  InstanceType:
+    Description: EC2 Instance Type - about 8 GB of ram for a 7b model, about 16 for a 13b. The more CPU the better
+    Type: String
+    Default: p3.2xlarge
+  AmiId:
+    Description: Amazon Linux 2023 AMI ID
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Default: '/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64'
+  VolumeSize:
+    Description: Size of the EC2 instance volume in GB
+    Type: Number
+    Default: 25
+  VPC:
+    Description: The VPC for the AWS objects
+    Type: 'AWS::EC2::VPC::Id'
+  SubnetId:
+    Description: VPC PUBLIC subnet ID
+    Type: 'AWS::EC2::Subnet::Id'
+  NetAllowedIn:
+    Description: 'CIDR Network Allowed to access the server (X.X.X.X/XX). This could be your public ip with a /32'
+    Type: String
+  ModelURL:
+    Description: 'URL for the .gguf format model you want to download. The default model is about 4.8 GB.'
+    Type: String
+    Default: 'https://huggingface.co/TheBloke/CollectiveCognition-v1.1-Mistral-7B-GGUF/resolve/main/collectivecognition-v1.1-mistral-7b.Q4_K_M.gguf'
+  ModelFileName:
+    Description: 'The file name you want to save the model as (x.gguf)'
+    Type: String
+    Default: 'collectivecognition.gguf'
+  
+Resources:
+
+  IAMRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: !Sub '${NamePrefix}-ec2-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: 'Allow'
+            Principal:
+              Service:
+                - 'ec2.amazonaws.com'
+            Action:
+              - 'sts:AssumeRole'
+      Policies:
+        - PolicyName: ssm-connect-minimal-permissions
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Action:
+                  - 'ssm:UpdateInstanceInformation'
+                  - 'ssmmessages:CreateControlChannel'
+                  - 'ssmmessages:CreateDataChannel'
+                  - 'ssmmessages:OpenControlChannel'
+                  - 'ssmmessages:OpenDataChannel'
+                Resource: '*'
+
+  InstanceProfile:
+    Type: 'AWS::IAM::InstanceProfile'
+    Properties:
+      InstanceProfileName: !Sub '${NamePrefix}-instance-profile'
+      Roles:
+        - Ref: IAMRole
+
+  InstanceSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: !Sub '${NamePrefix} security group'
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: !Ref NetAllowedIn
+          Description: 'Allow http inbound to the webserver'
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+          Description: 'Allow Outbound'
+      VpcId: !Ref VPC
+
+  LlamaCppServer:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      InstanceType: !Ref InstanceType
+      ImageId: !Ref AmiId
+      IamInstanceProfile: !Ref InstanceProfile
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: !Ref VolumeSize
+            VolumeType: gp3
+            Encrypted: true
+      SecurityGroupIds:
+        - !GetAtt InstanceSecurityGroup.GroupId
+      SubnetId: !Ref SubnetId
+      UserData:
+        Fn::Base64: !Sub |
+          #!/usr/bin/env bash
+
+          # ---- p3 series NVIDIA driver install ----
+          
+          # install pre-reqs
+          yum install -y kernel-devel-$(uname -r) kernel-headers-$(uname -r)
+          
+          # silent install of nvidia datacenter drivers for the p3 series
+          BASE_URL=https://us.download.nvidia.com/tesla
+          DRIVER_VERSION=510.47.03
+          curl -fSsl -O $BASE_URL/$DRIVER_VERSION/NVIDIA-Linux-x86_64-$DRIVER_VERSION.run
+          chmod +x NVIDIA-Linux-x86_64-$DRIVER_VERSION.run
+          CC=/usr/bin/gcc10-gcc ./NVIDIA-Linux-x86_64-$DRIVER_VERSION.run --tmpdir . --silent
+
+
+          # ---- llama.cpp setup ----
+          # install pre-reqs
+          yum install make automake gcc gcc-c++ kernel-devel git -y
+          cd /opt
+          git clone https://github.com/ggerganov/llama.cpp.git
+          cd llama.cpp
+          # compile llama.cpp
+          #make
+          # download the model file 
+          wget -O models/${ModelFileName} ${ModelURL}
+          # start server
+          #nohup ./server -m models/${ModelFileName} --host 0.0.0.0 --port 80 &
+
+          #--- Signal result to CloudFormation ---
+          /opt/aws/bin/cfn-signal -e $? --stack "${AWS::StackName}" --resource "LlamaCppServer" --region "${AWS::Region}"
+      Tags:
+        - Key: Name
+          Value: !Sub '${NamePrefix} llama.cpp server'
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT10M
+
+Outputs:
+  WebServerURL:
+    Description: Access the Web Server Here
+    Value: !Join ['',['http://',!GetAtt LlamaCppServer.PublicIp]]
