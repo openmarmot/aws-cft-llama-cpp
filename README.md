@@ -16,6 +16,10 @@ find yourself running this template a lot, please move the models to S3 or creat
 - c6a.xlarge : $113 / month (assuming you accidentally left it on all month)
 - storage : $0.08 gigabyte/month
 
+### Templates
+- cft-llama-cpp.yaml - this is the original template. It uses CPU and is cheaper but slower
+- wip-cft-llama-cpp-gpu.yaml - this is a work in progress. It uses a NVIDIA GPU and is more expensive
+
 ### Instructions
 - Run the cloudformation template
 - When it completes navigate to the url on the cloudformation outputs tab
