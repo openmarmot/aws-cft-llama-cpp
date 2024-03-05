@@ -12,8 +12,9 @@ find yourself running this template a lot, please move the models to S3 or creat
 ### Requirements
 - A standard AWS VPC with at least one public subnet with Public IP addresses enabled
 
-### Approximate AWS Costs as of 2023. Subject to change
+### Approximate AWS Costs as of 2024. Subject to change
 - c6a.xlarge : $113 / month (assuming you accidentally left it on all month)
+- p3.2xlarge : $2234 / month (!!) (assuming you accidentally left it on all month)
 - storage : $0.08 gigabyte/month
 
 ### Templates

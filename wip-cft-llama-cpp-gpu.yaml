@@ -121,10 +121,10 @@ Resources:
           
           # silent install of nvidia datacenter drivers for the p3 series
           BASE_URL=https://us.download.nvidia.com/tesla
-          DRIVER_VERSION=510.47.03
+          DRIVER_VERSION=440.95.01
           curl -fSsl -O $BASE_URL/$DRIVER_VERSION/NVIDIA-Linux-x86_64-$DRIVER_VERSION.run
           chmod +x NVIDIA-Linux-x86_64-$DRIVER_VERSION.run
-          CC=/usr/bin/gcc10-gcc ./NVIDIA-Linux-x86_64-$DRIVER_VERSION.run --tmpdir . --silent
+          ./NVIDIA-Linux-x86_64-$DRIVER_VERSION.run --tmpdir . --silent
 
 
           # ---- llama.cpp setup ----
