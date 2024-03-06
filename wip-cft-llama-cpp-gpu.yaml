@@ -114,14 +114,14 @@ Resources:
         Fn::Base64: !Sub |
           #!/usr/bin/env bash
 
-          # ---- p3 series NVIDIA driver install ----
+          # ---- p3 series NVIDIA driver install for AL2023----
           
           # install pre-reqs
-          yum install -y kernel-devel-$(uname -r) kernel-headers-$(uname -r)
+          dnf install -y kernel-devel-$(uname -r) kernel-headers-$(uname -r) kernel-modules-extra
           
           # silent install of nvidia datacenter drivers for the p3 series
           BASE_URL=https://us.download.nvidia.com/tesla
-          DRIVER_VERSION=440.95.01
+          DRIVER_VERSION=	550.54.14
           curl -fSsl -O $BASE_URL/$DRIVER_VERSION/NVIDIA-Linux-x86_64-$DRIVER_VERSION.run
           chmod +x NVIDIA-Linux-x86_64-$DRIVER_VERSION.run
           ./NVIDIA-Linux-x86_64-$DRIVER_VERSION.run --tmpdir . --silent
@@ -129,7 +129,7 @@ Resources:
 
           # ---- llama.cpp setup ----
           # install pre-reqs
-          yum install make automake gcc gcc-c++ kernel-devel git -y
+          dnf install make automake gcc gcc-c++ kernel-devel git -y
           cd /opt
           git clone https://github.com/ggerganov/llama.cpp.git
           cd llama.cpp
