@@ -121,7 +121,7 @@ Resources:
           
           # silent install of nvidia datacenter drivers for the p3 series
           BASE_URL=https://us.download.nvidia.com/tesla
-          DRIVER_VERSION=	550.54.14
+          DRIVER_VERSION=550.54.14
           curl -fSsl -O $BASE_URL/$DRIVER_VERSION/NVIDIA-Linux-x86_64-$DRIVER_VERSION.run
           chmod +x NVIDIA-Linux-x86_64-$DRIVER_VERSION.run
           ./NVIDIA-Linux-x86_64-$DRIVER_VERSION.run --tmpdir . --silent
