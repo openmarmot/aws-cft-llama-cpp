@@ -18,8 +18,12 @@ find yourself running this template a lot, please move the models to S3 or creat
 - storage : $0.08 gigabyte/month
 
 ### Templates
-- cft-llama-cpp.yaml - this is the original template. It uses CPU and is cheaper but slower
-- wip-cft-llama-cpp-gpu.yaml - this is a work in progress. It uses a NVIDIA GPU and is more expensive
+- cft-llama-cpp.yaml - (Recommended) this is the original template. It uses CPU and is cheaper but slower
+- wip-cft-llama-cpp-gpu.yaml - Work in Progress : this uses a NVIDIA GPU and is more expensive. It is theoretically faster
+
+NOTE - The GPU version has some NVIDIA configuration issues at the moment. It runs but the NVIDIA utilities are not working
+and I think llama.cpp is just running on CPU (it is slower that the regular template). I'm not sure if I will continue to work
+on it or not, but I'm leaving it here as an example in case it helps someone else.
 
 ### Instructions
 - Run the cloudformation template

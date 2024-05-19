@@ -24,7 +24,7 @@ Parameters:
   VolumeSize:
     Description: Size of the EC2 instance volume in GB
     Type: Number
-    Default: 25
+    Default: 100
   VPC:
     Description: The VPC for the AWS objects
     Type: 'AWS::EC2::VPC::Id'
@@ -116,15 +116,17 @@ Resources:
 
           # ---- p3 series NVIDIA driver install for AL2023----
           
-          # install pre-reqs
-          dnf install -y kernel-devel-$(uname -r) kernel-headers-$(uname -r) kernel-modules-extra
-          
-          # silent install of nvidia datacenter drivers for the p3 series
-          BASE_URL=https://us.download.nvidia.com/tesla
-          DRIVER_VERSION=550.54.14
-          curl -fSsl -O $BASE_URL/$DRIVER_VERSION/NVIDIA-Linux-x86_64-$DRIVER_VERSION.run
-          chmod +x NVIDIA-Linux-x86_64-$DRIVER_VERSION.run
-          ./NVIDIA-Linux-x86_64-$DRIVER_VERSION.run --tmpdir . --silent
+          # Install development tools and kernel headers
+          sudo dnf install -y gcc kernel-devel-$(uname -r) kernel-headers-$(uname -r) dkms
+
+          # Add NVIDIA repository
+          sudo dnf config-manager --add-repo=https://developer.download.nvidia.com/compute/cuda/repos/fedora35/x86_64/cuda-fedora35.repo
+
+          # Install NVIDIA driver
+          sudo dnf install -y nvidia-driver nvidia-settings
+
+          # Install CUDA toolkit
+          sudo dnf install -y cuda
 
 
           # ---- llama.cpp setup ----
@@ -134,11 +136,14 @@ Resources:
           git clone https://github.com/ggerganov/llama.cpp.git
           cd llama.cpp
           # compile llama.cpp
-          #make
+          # get the code here : https://developer.nvidia.com/cuda-gpus
+          export CUDA_DOCKER_ARCH=compute_70
+          export PATH=/usr/local/cuda/bin:$PATH
+          make LLAMA_CUDA=1
           # download the model file 
           wget -O models/${ModelFileName} ${ModelURL}
           # start server
-          #nohup ./server -m models/${ModelFileName} --host 0.0.0.0 --port 80 &
+          nohup ./server -m models/${ModelFileName} --host 0.0.0.0 --port 80 &
 
           #--- Signal result to CloudFormation ---
           /opt/aws/bin/cfn-signal -e $? --stack "${AWS::StackName}" --resource "LlamaCppServer" --region "${AWS::Region}"
@@ -147,7 +152,7 @@ Resources:
           Value: !Sub '${NamePrefix} llama.cpp server'
     CreationPolicy:
       ResourceSignal:
-        Timeout: PT10M
+        Timeout: PT30M
 
 Outputs:
   WebServerURL:
