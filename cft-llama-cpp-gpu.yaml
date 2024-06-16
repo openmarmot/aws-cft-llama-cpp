@@ -2,6 +2,8 @@
 
 # ! Please view the Readme at the github repo for important usage notes !
 
+# Note that the software this template is installing takes a significant amount of time to run
+
 # Refs
 #  llama.cpp repo  : https://github.com/ggerganov/llama.cpp
 #  hugging face : https://huggingface.co/
@@ -114,19 +116,29 @@ Resources:
         Fn::Base64: !Sub |
           #!/usr/bin/env bash
 
-          # ---- p3 series NVIDIA driver install for AL2023----
+          # --- general ---
+          dnf update -y
           
-          # Install development tools and kernel headers
-          sudo dnf install -y gcc kernel-devel-$(uname -r) kernel-headers-$(uname -r) dkms
+          # ---- NVIDIA driver install for AL2023----
+          # pre-reqs
+          dnf install -y dkms kernel-devel kernel-modules-extra
+          # repos
+          dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/amzn2023/x86_64/cuda-amzn2023.repo
+          dnf config-manager --add-repo https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo
+          dnf clean expire-cache
+          
+          # nvidia driver
+          dnf module install -y nvidia-driver:latest-dkms
 
-          # Add NVIDIA repository
-          sudo dnf config-manager --add-repo=https://developer.download.nvidia.com/compute/cuda/repos/fedora35/x86_64/cuda-fedora35.repo
+          # cuda toolkit
+          dnf install -y cuda-toolkit
 
-          # Install NVIDIA driver
-          sudo dnf install -y nvidia-driver nvidia-settings
+          # optional - install the container tool kit 
+          #dnf install -y nvidia-container-toolkit
 
-          # Install CUDA toolkit
-          sudo dnf install -y cuda
+          # tests
+          # nvidia-smi
+          # /etc/alternatives/cuda/bin/nvcc --version
 
 
           # ---- llama.cpp setup ----
@@ -138,12 +150,12 @@ Resources:
           # compile llama.cpp
           # get the code here : https://developer.nvidia.com/cuda-gpus
           export CUDA_DOCKER_ARCH=compute_70
-          export PATH=/usr/local/cuda/bin:$PATH
+          export PATH=/etc/alternatives/cuda/bin:$PATH
           make LLAMA_CUDA=1
           # download the model file 
           wget -O models/${ModelFileName} ${ModelURL}
-          # start server
-          nohup ./server -m models/${ModelFileName} --host 0.0.0.0 --port 80 &
+          # start server. note these settings are likely suboptimal
+          nohup ./llama-server -m models/${ModelFileName} -ngl 32 --host 0.0.0.0 --port 80 &
 
           #--- Signal result to CloudFormation ---
           /opt/aws/bin/cfn-signal -e $? --stack "${AWS::StackName}" --resource "LlamaCppServer" --region "${AWS::Region}"
@@ -152,7 +164,7 @@ Resources:
           Value: !Sub '${NamePrefix} llama.cpp server'
     CreationPolicy:
       ResourceSignal:
-        Timeout: PT30M
+        Timeout: PT45M
 
 Outputs:
   WebServerURL:
