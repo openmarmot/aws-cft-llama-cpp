@@ -21,7 +21,7 @@ find yourself running this template a lot, please move the models to S3 or creat
 - cft-llama-cpp.yaml - (Recommended) this is the original template. It uses CPU and is cheaper but slower
 - cft-llama-cpp-gpu.yaml - This uses a NVIDIA GPU and is more expensive. It is theoretically faster
 
-NOTE - Both versions are not fully optimmized. THere are a lot of possible variables that can be set when 
+NOTE - Both versions are not fully optimized. THere are a lot of possible variables that can be set when 
 running the server. The GPU version in particular could be optimized to offload more layers, and a larger model 
 could also be used.
 
