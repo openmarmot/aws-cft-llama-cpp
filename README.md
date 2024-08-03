@@ -19,11 +19,11 @@ find yourself running this template a lot, please move the models to S3 or creat
 
 ### Templates
 - cft-llama-cpp.yaml - (Recommended) this is the original template. It uses CPU and is cheaper but slower
-- cft-llama-cpp-gpu.yaml - This uses a NVIDIA GPU and is more expensive. It is theoretically faster
+- cft-llama-cpp-gpu.yaml - This uses a NVIDIA GPU and is more expensive. It is way faster and way more expensive
 
-NOTE - Both versions are not fully optimized. There are a lot of possible variables that can be set when 
+Note - Both versions are not fully optimized. There are a lot of possible variables that can be set when 
 running the server. The GPU version in particular could be optimized to offload more layers, and a larger model 
-could also be used.
+could also be used. The GPU template also takes about an hour to create due to the NVIDIA driver setup
 
 ### Instructions
 - Run the cloudformation template
@@ -41,14 +41,15 @@ could also be used.
 - Hit 'connect' to connect with system manager session manager
 - sudo su
 - cd /opt/llama.cpp
-- ./server -m models/${ModelFileName} --host 0.0.0.0 --port 80
+- ./server -m models/model.gguf -c 2048 --host 0.0.0.0 --port 80
 
 ### Some Notes on Models / Performance / Etc
 - You can download as many models as you would like to the models folder. The Linux command 'wget' works well for this.
 - llama.cpp runs models in the gguv format. The default instance will run 7b models fairly well in this format.
 - Generally RAM requirements roughly match the billions of parameters in a model (give a 7b like 8GB of RAM or so)
 - Some of the 13b models are great - but CPU only performance might be not great.
-- llama.cpp does support offloading work to GPUs. See the repo for more details 
+- I had to start specifying the context length (-c) with the llama 3.1 models or it would run out of ram. 
+The value I am using is likely low.
 
 ### References
 - [Llama.cpp](https://github.com/ggerganov/llama.cpp)

@@ -39,11 +39,11 @@ Parameters:
   ModelURL:
     Description: 'URL for the .gguf format model you want to download. The default model is about 4.8 GB.'
     Type: String
-    Default: 'https://huggingface.co/TheBloke/CollectiveCognition-v1.1-Mistral-7B-GGUF/resolve/main/collectivecognition-v1.1-mistral-7b.Q4_K_M.gguf'
+    Default: 'https://huggingface.co/lmstudio-community/Meta-Llama-3.1-8B-Instruct-GGUF/resolve/main/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf'
   ModelFileName:
     Description: 'The file name you want to save the model as (x.gguf)'
     Type: String
-    Default: 'collectivecognition.gguf'
+    Default: 'model.gguf'
   
 Resources:
 
@@ -155,7 +155,7 @@ Resources:
           # download the model file 
           wget -O models/${ModelFileName} ${ModelURL}
           # start server. note these settings are likely suboptimal
-          nohup ./llama-server -m models/${ModelFileName} -ngl 32 --host 0.0.0.0 --port 80 &
+          nohup ./llama-server -m models/${ModelFileName} -c 2048 -ngl 32 --host 0.0.0.0 --port 80 &
 
           #--- Signal result to CloudFormation ---
           /opt/aws/bin/cfn-signal -e $? --stack "${AWS::StackName}" --resource "LlamaCppServer" --region "${AWS::Region}"
@@ -164,7 +164,7 @@ Resources:
           Value: !Sub '${NamePrefix} llama.cpp server'
     CreationPolicy:
       ResourceSignal:
-        Timeout: PT45M
+        Timeout: PT80M
 
 Outputs:
   WebServerURL:
