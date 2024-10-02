@@ -154,8 +154,31 @@ Resources:
           make LLAMA_CUDA=1
           # download the model file 
           wget -O models/${ModelFileName} ${ModelURL}
-          # start server. note these settings are likely suboptimal
-          nohup ./llama-server -m models/${ModelFileName} -c 2048 -ngl 32 --host 0.0.0.0 --port 80 &
+
+          # setup systemd service and start server
+          SERVICE_NAME="llama-server.service"
+          cat <<EOF > /etc/systemd/system/llama-server.service
+          [Unit]
+          Description=LLama.cpp Server Service
+          After=network.target
+
+          [Service]
+          Type=simple
+          User=root
+          WorkingDirectory=/opt/llama.cpp
+          ExecStart=/opt/llama.cpp/llama-server -m models/${ModelFileName} -c 2048 -ngl 32 --host 0.0.0.0 --port 80
+          Restart=on-failure
+
+          [Install]
+          WantedBy=multi-user.target
+          EOF
+
+          systemctl daemon-reload
+          systemctl enable llama-server.service
+          systemctl start llama-server.service
+
+          sleep 10
+          systemctl status llama-server.service
 
           #--- Signal result to CloudFormation ---
           /opt/aws/bin/cfn-signal -e $? --stack "${AWS::StackName}" --resource "LlamaCppServer" --region "${AWS::Region}"
