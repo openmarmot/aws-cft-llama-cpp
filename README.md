@@ -9,7 +9,7 @@ to make it easy to connect to the instance from the AWS web console.
 Note : The UserData script in this template downloads a aproximately 4.5 GB model. It is meant to be done once. If you 
 find yourself running this template a lot, please move the models to S3 or create a AMI with the model already on it.
 
-![screenshot](/screenshots/llama-cpp-web-ui.png "LLAMA.CPP Web UI")
+![screenshot](/screenshots/llama-cpp-web-ui.png "LLAMA.CPP Web UI")  
 Screenshot of the web interface for a llama.cpp server hosted on AWS with these cloudformation templates.
 Please see references for a link to the llama.cpp project - which is superb
 
