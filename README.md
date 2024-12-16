@@ -60,6 +60,7 @@ The value I am using is likely low.
 ### References
 - [Llama.cpp](https://github.com/ggerganov/llama.cpp)
 - [Hugging Face](https://huggingface.co/)
+- [How to Convert Hugging Face Models to GGUF](https://github.com/ggerganov/llama.cpp/discussions/2948)
 
 
 ### License / Whatever

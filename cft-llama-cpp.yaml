@@ -113,13 +113,14 @@ Resources:
       UserData:
         Fn::Base64: !Sub |
           #!/usr/bin/env bash
-          yum install make automake gcc gcc-c++ kernel-devel git -y
+          yum install make automake gcc gcc-c++ kernel-devel git cmake htop -y
           cd /opt
-          git clone https://github.com/ggerganov/llama.cpp.git
+          git clone --depth 1 --branch b4333 https://github.com/ggerganov/llama.cpp.git
           cd llama.cpp
 
           # compile llama.cpp
-          make
+          cmake -B build
+          cmake --build build --config Release
 
           # download the model file 
           wget -O models/${ModelFileName} ${ModelURL}
@@ -135,7 +136,7 @@ Resources:
           Type=simple
           User=root
           WorkingDirectory=/opt/llama.cpp
-          ExecStart=/opt/llama.cpp/llama-server -m models/${ModelFileName} -c 2048 --host 0.0.0.0 --port 80
+          ExecStart=/opt/llama.cpp/build/bin/llama-server -m /opt/llama.cpp//models/${ModelFileName} -c 2048 --host 0.0.0.0 --port 80
           Restart=on-failure
 
           [Install]

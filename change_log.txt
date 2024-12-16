@@ -1,0 +1,14 @@
+aws-cft-llama-cpp Change Log 
+
+----------------------------------
+Dec 16 2024
+- updated code to the new cmake build style
+- switched to cloning a specific release (b4333)
+- updated screenshot showing the new llama.cpp ui 
+
+The rate of (breaking) changes in this repo is very 
+high so I switched to cloning a specific release. 
+
+note - I have NOT updated the GPU instance code yet.
+The GPU code takes a lot longer to work on because 
+the template build time is about an hour
