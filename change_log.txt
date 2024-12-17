@@ -1,5 +1,18 @@
 aws-cft-llama-cpp Change Log 
 
+
+----------------------------------
+Dec 17 2024
+- gpu template updated to the latest code 
+
+I think the llama.cpp cuda compilation time is exceeding the 80 minute time out 
+on the template. I spent some time running through the commands manually and everything 
+seemed to be working, but the llama.cpp cmake was going extremely slow, basically slower 
+than I was willing to pay for GPU time to test.
+
+Further work on the GPU template will probably be halted.
+
+
 ----------------------------------
 Dec 16 2024
 - updated code to the new cmake build style

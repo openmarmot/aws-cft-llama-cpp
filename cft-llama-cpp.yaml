@@ -113,7 +113,7 @@ Resources:
       UserData:
         Fn::Base64: !Sub |
           #!/usr/bin/env bash
-          yum install make automake gcc gcc-c++ kernel-devel git cmake htop -y
+          dnf install make automake gcc gcc-c++ kernel-devel git cmake htop -y
           cd /opt
           git clone --depth 1 --branch b4333 https://github.com/ggerganov/llama.cpp.git
           cd llama.cpp

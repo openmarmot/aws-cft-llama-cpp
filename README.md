@@ -23,7 +23,12 @@ Please see references for a link to the llama.cpp project - which is superb
 
 ### Templates
 - cft-llama-cpp.yaml - (Recommended) this is the original template. It uses CPU and is cheaper but slower
-- cft-llama-cpp-gpu.yaml - This uses a NVIDIA GPU and is more expensive. It is way faster and way more expensive
+- cft-llama-cpp-gpu.yaml - (Not operational!) This uses a NVIDIA GPU and is more expensive.
+
+The GPU template is no longer working after some recent llama.cpp updates. I have updated the code but it is timing 
+out - I think the llama.cpp CUDA compilation time has gone up significantly from older versions. It will likely work if 
+you increase the Cloudformation timeout - but the cost of testing and maintaining this template has gotten too high, so I 
+am keeping it as an archive only.
 
 Note - Both versions are not fully optimized. There are a lot of possible variables that can be set when 
 running the server. The GPU version in particular could be optimized to offload more layers, and a larger model 
